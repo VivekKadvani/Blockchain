@@ -1,68 +1,21 @@
-const SHA256 = require('crypto-js/sha256')
-class Block {
-    constructor(index, timestamp, data, previousHash = '') {
-        this.index = index;
-        this.timestamp = timestamp;
-        this.previousHash = previousHash;
-        this.data = data;
-        this.hash = this.calculateHash();
-        this.mineFlag = 0;
-    }
+const { Blockchain, Transaction } = require('./Blockchain');
+const EC = require('elliptic').ec;
+const ec = new EC('secp256k1');// You can use any elliptic curve you want
 
-    calculateHash() {
-        return SHA256(this.index + this.previousHash + this.timestamp + JSON.stringify(this.data) + this.mineFlag).toString();
-    }
+const myKey = ec.keyFromPrivate('7c016cfc1b53313f8b8b7e8fe153457dedb92d12eafa392972917797874d17a4')
+const myWalletAddress = myKey.getPublic('hex');
 
-    mineBlock(difficulty) {
-        while (this.hash.substring(0, difficulty) !== Array(difficulty + 1).join("0")) {
-            this.mineFlag++;
-            this.hash = this.calculateHash();
-        }
-        console.log("Block mined : "+this.hash);
-    }
-}
-
-class Blockchain {
-    constructor() {
-        this.chain = [this.createFirstBlock()]
-        this.difficulty = 2;
-    }
-
-    createFirstBlock() {
-        return new Block('0', '01/03/2023', 'First block', '0')
-    }
-
-    getLastBlock() {
-        return this.chain[this.chain.length - 1];
-    }
-
-    addBlock(newBlock) {
-        newBlock.previousHash = this.getLastBlock().hash;
-        newBlock.mineBlock(this.difficulty)
-        this.chain.push(newBlock);
-    }
-
-    validateChain() {
-        for (let i = 1; i < this.chain.length; i++) {
-            const currentBlock = this.chain[i];
-            const PreviousBlock = this.chain[i - 1];
-
-            if (currentBlock.hash !== currentBlock.calculateHash()) {
-                return false;
-            }
-
-            if (currentBlock.previousHash !== PreviousBlock.hash) {
-                return false
-            }
-        }
-        return true
-    }
-}
 
 let vcoin = new Blockchain();
-console.log("mininig block 1....")
-vcoin.addBlock(new Block('1', '02/02/2023', { coin: 4 }))
-console.log("mining block 2....")
-vcoin.addBlock(new Block('2', '03/02/2023', { coin: 40 }))
-// console.log(vcoin.validateChain())
-// console.log(JSON.stringify(vcoin, null, 4))
+const tx1 = new Transaction(myWalletAddress , 'public key ',10);
+tx1.signTransaction(myKey);
+vcoin.addTransaction(tx1);
+const tx2 = new Transaction(myWalletAddress , 'public key ',20);
+tx2.signTransaction(myKey);
+vcoin.addTransaction(tx2);
+
+console.log("start miner")
+vcoin.minePendingTransactions(myWalletAddress)
+
+console.log("balance of vivek : ",vcoin.getBalanceOfAddress(myWalletAddress))
+console.log("Validataion result : ", vcoin.validateChain())
