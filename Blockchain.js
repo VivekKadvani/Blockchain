@@ -19,8 +19,8 @@ class Transaction {
         }
 
         const hashTx =this.calculateHash();
-        const sig = signingKey.sign(hashTx , 'base64');
-        this.signature = sig.toDER('hex');
+        const sig = signingKey.sign(hashTx , 'base64');//sign method of EC library
+        this.signature = sig.toDER('hex');//convert binary to hexadecimal 
 
     } 
 
@@ -32,7 +32,7 @@ class Transaction {
         }
 
         const publicKey = ec.keyFromPublic(this.fromAddress,'hex')
-        return publicKey.verify(this.calculateHash(), this.signature);
+        return publicKey.verify(this.calculateHash(), this.signature);//verify the original msg hash and signaturre
     }
 }
 class Block {
@@ -82,12 +82,10 @@ class Blockchain {
     }
 
     minePendingTransactions(miningRewardAdress){
-        let block = new Block(Date.now() , this.pendingTransactions,this.getLastBlock().hash);
+        const block = new Block(Date.now() , this.pendingTransactions,this.getLastBlock().hash);
         block.mineBlock(this.difficulty)
-
         console.log("mined block");
         this.chain.push(block);
-
         this.pendingTransactions = [
             new Transaction(null, miningRewardAdress ,this.miningReward)
         ];
